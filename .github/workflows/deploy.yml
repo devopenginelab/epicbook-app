@@ -1,0 +1,47 @@
+name: Deploy Application to AWS ECR
+
+on:
+  push:
+    branches:
+      - main
+
+# Crucial for OIDC: GitHub Actions needs permissions to request the JWT token
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the application codebase
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # 2. Authenticate with AWS using OIDC (No long-lived keys used here)
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::YOUR_AWS_ACCOUNT_ID:role/epicbook-github-actions-role
+          aws-region: us-east-1
+          audience: sts.amazonaws.com
+
+      # 3. Log into Amazon ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # 4. Build, tag, and push the image to Amazon ECR
+      - name: Build, Tag, and Push Docker Image
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: dev-epicbook-app
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Build the Docker image locally on the runner
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG -t $REGISTRY/$REPOSITORY:latest .
+
+          # Push both the unique SHA tag and the 'latest' tag to ECR
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+          docker push $REGISTRY/$REPOSITORY:latest
