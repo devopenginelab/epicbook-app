@@ -34,7 +34,7 @@ COPY --from=builder /app/db ./db
 USER node
 
 # Expose the port the app listens on
-EXPOSE 3000
+EXPOSE 8080
 
 # Start the application
 CMD ["node", "server.js"]
