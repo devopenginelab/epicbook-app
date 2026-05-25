@@ -26,8 +26,13 @@ WORKDIR /app
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/server.js ./
-COPY --from=builder /app/config ./config
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/views ./views
+COPY --from=builder /app/routes ./routes
+COPY --from=builder /app/models ./models
 COPY --from=builder /app/db ./db
+COPY --from=builder /app/config ./config
+
 # Add any other source directories/files your app needs here
 
 # Ensure the container runs as a non-privileged user
